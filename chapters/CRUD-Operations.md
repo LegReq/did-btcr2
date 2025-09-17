@@ -977,13 +977,15 @@ This algorithm creates a ::Singleton Beacon:: Signal that announces a single ::B
 and broadcasts this ::Beacon Signal:: on the Bitcoin network.
 
 The Singleton Beacon Signal is a Bitcoin transaction that MUST spend at least one ::UTXO:: 
-controlled by the ::Beacon Address::. The last transaction output of the transaction MUST 
+controlled by the ::Beacon Address::. This Beacon Address MUST be included as a service 
+within the DID document of the did:btcr2 that is announcing the BTCR2 Update. 
+The last transaction output of the transaction MUST 
 commit to the 32 bytes of data using the following form: `OP_RETURN, OP_PUSH_BYTES, <32 signal bytes>`. 
 These ::Signal Bytes:: MUST be the 32-byte SHA256 hash of the ::BTCR2 Update:: canonicalized using JCS.
 
-The Beacon Signal MUST be signed by the private key that controls the ::Beacon Address::. 
+The ::Beacon Signal:: MUST be signed by the private key that controls the ::Beacon Address::. 
 The signed Bitcoin transaction can be broadcast to the Bitcoin network and included 
-within the Bitcoin blcockahin.
+within the Bitcoin blockchain.
 
 #### Algo 19. Advertise Update Opportunity (Aggregator) {.unnumbered}
 
