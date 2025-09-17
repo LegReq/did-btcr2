@@ -1083,7 +1083,7 @@ participants must persist the BTCR2 Updates, nonce values and SMT Proofs for eac
 #### Algo 23. Broadcast Aggregated Signal (Aggregator) {.unnumbered}
 
 Once the ::Beacon Aggregator:: has received confirmation of the ::Beacon Signal:: 
-from all participants within the ::Beacon Cohort:: they finalize the signature 
+from all ::Beacon Participants:: within the ::Beacon Cohort:: they finalize the signature 
 on the Beacon Signal. Signal confirmations contain partial signatures from each participant, 
 these are aggregated together to create a final signature that spends the ::UTXO:: controlled 
 by the ::Beacon Address:: included an an input into the Beacon Signal. Aggregation of partial 
