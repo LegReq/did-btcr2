@@ -837,7 +837,7 @@ on the Bitcoin blockchain.
 
 First, the ::Beacon Aggregator:: advertises the update opportunity using [Algo 19. Advertise Update Opportunity (Aggregator)]. 
 Then, each member of the cohort prepares a response to that opportunity using 
-[Algo 20. Prepare & Submit Update Response (Participant)]. Once all responses are received, the aggregator 
+[Algo 20. Prepare & Submit Opportunity Response (Participant)]. Once all responses are received, the aggregator 
 combines those responses into a Beacon Signal and requests confirmation by all participants using 
 [Algo 21. Aggregate & Request Signal Confirmation (Aggregator)]. To confirm that signal, 
 each participant uses [Algo 22. Confirm Signal (Participant)] to sign and submit their 
