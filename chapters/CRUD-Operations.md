@@ -836,13 +836,13 @@ that guarantees all participants have confirmed every Signal that gets announced
 on the Bitcoin blockchain. 
 
 First, the ::Beacon Aggregator:: advertises the update opportunity using [Algo 19. Advertise Update Opportunity (Aggregator)]. 
-Then, each member of the cohort prepares a response to that opportunity using 
+Then, each member of the ::Beacon Cohort:: prepares a response to that opportunity using 
 [Algo 20. Prepare & Submit Opportunity Response (Participant)]. Once all responses are received, the aggregator 
-combines those responses into a Beacon Signal and requests confirmation by all participants using 
+combines those responses into a ::Beacon Signal:: and requests confirmation by all participants using 
 [Algo 21. Aggregate & Request Signal Confirmation (Aggregator)]. To confirm that signal, 
 each participant uses [Algo 22. Confirm Signal (Participant)] to sign and submit their 
-MuSig2 partially signed Bitcoin transaction. Finally, the aggregator combines all confirmations 
-to finalize the transaction and posts the Signal to the Bitcoin blockchain using 
+MuSig2 partially signed Bitcoin transaction. Finally, the aggregator combines all partial signatures from 
+the confirmations to finalize the transaction and posts the Beacon Signal to the Bitcoin blockchain using 
 [Algo 23. Broadcast Aggregated Signal (Aggregator)].
 
 #### Algo 15. Create Singleton Beacon Service {.unnumbered}
