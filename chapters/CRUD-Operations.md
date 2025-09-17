@@ -807,7 +807,8 @@ using either ::Map Beacons:: or ::SMT Beacons::.
 
 Fundamentally, two steps are involved. First, create an update to the DID Document, 
 secured by capability invocation verification method in the current DID Document. 
-Second, announce that update by broadcasting an on-chain ::Beacon Signal::.
+Second, announce and anchor the update on-chain by broadcasting a ::Beacon Signal::
+to the Bitcoin network.
 
 #### Create a Beacon Service {.unnumbered .unlisted}
 
