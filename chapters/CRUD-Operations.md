@@ -1003,16 +1003,16 @@ to them by the ::BTCR2 Beacons:: they participate in, otherwise these beacons wi
 unable to broadcast ::Beacon Signals::. This response must include:
 
 * The indexes representing the SHA256 hash of the DIDs to be updated. 
-These indexes SHOULD jave been previously registered by the 
-Beacon Participant as part of joining the cohort.  
-* For each index to be updated, the value of the update.  
-  * The calculation of the value varies by ::Beacon Type::. For a ::Map Beacon:: the 
-  value is the SHA256 hash of the ::BTCR2 Update:: canonicalized using JCS.
-  For a ::SMT Beacon:: the value is either the double SHA256 hash of a random nonce if no 
+These indexes SHOULD have been previously registered by the 
+Beacon Participant as part of joining the ::Beacon Cohort::.  
+* For each index included within the Beacon Signal, the value of the update MUST be provided. 
+The calculation of the value varies by ::Beacon Type::.
+  *  For a ::Map Beacon:: the value is the SHA256 hash of the ::BTCR2 Update:: canonicalized using JCS.
+  * For a ::SMT Beacon:: the value is either the double SHA256 hash of a random nonce if no 
   update is present for the index or the SHA256 hash of the concatenated SHA256 hash of a 
   random nonce and the canonicalized BTCR2 Update. Participants MUST persist their nonce values.
   * Participants of ::SMT Beacons:: MUST provide an update for all indexes they registered 
-  with the ::Beacon Aggregator::
+  with the ::Beacon Aggregator::.
 * MuSig2 Nonce: A MuSig2 nonce constructed according to the nonce generation algorithm specified in [BIP327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki).
 
 This response SHOULD be sent over a secure communication channel and MAY be signed.
