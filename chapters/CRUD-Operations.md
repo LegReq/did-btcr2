@@ -845,7 +845,7 @@ MuSig2 partially signed Bitcoin transaction. Finally, the aggregator combines al
 the confirmations to finalize the transaction and posts the Beacon Signal to the Bitcoin blockchain using 
 [Algo 23. Broadcast Aggregated Signal (Aggregator)].
 
-#### Algo 15. Create Singleton Beacon Service {.unnumbered}
+#### Algo 15. Create Singleton Beacon Service {.unnumbered .tabbed}
 
 The algorithm constructs a service object that defines a ::Singleton Beacon:: 
 to be included within a DID document.
@@ -858,7 +858,18 @@ that the service is going to be included.
 * serviceEndpoint - A [BIP21 URI](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki) 
 encoded Bitcoin address. This address SHOULD be under the sole control of the DID controller.
 
-#### Algo 16. Join Cohort and Establish Aggregate Beacon Service {.unnumbered}
+
+##### Hide {.unnumbered .unlisted}
+
+##### Examples {.unnumbered .unlisted}
+
+
+[[Example]{.example-number-after} - A Singleton Beacon Service]{.example-caption}
+ 
+```{.json include="json/Beacons/SingletonBeacon-service.json"}
+```
+
+#### Algo 16. Join Cohort and Establish Aggregate Beacon Service {.unnumbered .tabbed}
 
 This protocol coordinates the construction of an n-of-n Pay-to-Taproot address, 
 where each ::Beacon Participant:: in a ::Beacon Cohort:: contributes one of the n keys 
@@ -902,6 +913,20 @@ The service object MUST contain the following properties:
 This MUST match the type of the BTCR2 Beacon as specified by the Beacon Aggregator.
 * serviceEndpoint \- The ::Beacon Address:: received from the aggregator, encoded as a [BIP21 URI](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki).
 
+##### Hide {.unnumbered .unlisted}
+
+##### Examples {.unnumbered .unlisted}
+
+
+[[Example]{.example-number-after} - A Map Beacon Service]{.example-caption}
+ 
+```{.json include="json/Beacons/MapBeacon-service.json"}
+```
+
+[[Example]{.example-number-after} - A SMT Beacon Service]{.example-caption}
+ 
+```{.json include="json/Beacons/SMTBeacon-service.json"}
+```
 
 #### Algo 17. Create Canonical BTCR2 Update {.unnumbered .tabbed}
 
@@ -971,7 +996,16 @@ the [BIP340 Data Integrity specification](https://dcdpr.github.io/data-integrity
 algorithm from VC Data Integrity passing `unsecuredBTCR2Update` as the input document, `cryptosuite`, and the set of `proofOptions`.  
 12. Return `btcr2Update`.
 
-#### Algo 18. Create & Announce Singleton Beacon Signal {.unnumbered}
+##### Examples {.unnumbered .unlisted}
+
+[[Example]{.example-number-after} - A BTCR2 Update that adds a new verification method and 
+authorizing it for the authentication verification relationship to an Initial DID Document]{.example-caption}
+ 
+```{.json include="json/CRUD-Operations/btcr2-update.json"}
+```
+
+
+#### Algo 18. Create & Announce Singleton Beacon Signal {.unnumbered .tabbed}
 
 This algorithm creates a ::Singleton Beacon:: Signal that announces a single ::BTCR2 Update:: 
 and broadcasts this ::Beacon Signal:: on the Bitcoin network.
@@ -986,6 +1020,14 @@ These ::Signal Bytes:: MUST be the 32-byte SHA256 hash of the ::BTCR2 Update:: c
 The ::Beacon Signal:: MUST be signed by the private key that controls the ::Beacon Address::. 
 The signed Bitcoin transaction can be broadcast to the Bitcoin network and included 
 within the Bitcoin blockchain.
+
+##### Hide {.unnumbered .unlisted}
+
+##### Examples {.unnumbered .unlisted}
+
+[[Example]{.example-number-after} - A hex encoded signed Beacon Signal from a Singleton Beacon]{.example-caption}
+ 
+`0100000000010175b62c3943aa4c696e4d95a6dd552b39cf7e98129501b2f285782f00ca59da400000000000ffffffff02a08c0000000000001600145ee17e005920fd86de8b54ffab2630f452d24c320000000000000000226a205eb68e519c150ec8df198ed9718d342fe23c17789e86eaa78ad1ede073f082d102483045022100909b73a6545c69333143c176b22486bc165fa2e36092b307787db103cce5a4e90220707f5f127ebe98304db415ae9ccbdaa997f13c226421c927471df979fa8f1e6b01210324ee967d8495aec7e15ad5509db305f8c84792452d8ba5cb5eb0f3ea12aeb9fb00000000`
 
 #### Algo 19. Advertise Update Opportunity (Aggregator) {.unnumbered}
 
