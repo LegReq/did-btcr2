@@ -799,7 +799,7 @@ The steps are as follows:
 
 ### Update
 
-Updating a BTCR2 DID is a matter of constructing a signed ::BTCR2 Update:: then announcing 
+Updating a did:btcr2 identifier is a matter of constructing a signed ::BTCR2 Update:: then announcing 
 that update via one or more ::BTCR2 Beacons:: listed in the current DID document. 
 Updates are either announced independently using ::Singleton Beacons::, or 
 announced as part of an aggregation cohort to minimize on-chain costs, 
@@ -809,23 +809,23 @@ Fundamentally, two steps are involved. First, create an update to the DID Docume
 secured by capability invocation verification method in the current DID Document. 
 Second, announce that update by broadcasting an on-chain ::Beacon Signal::.
 
-#### Create a Beacon Service {.unnumbered}
+#### Create a Beacon Service {.unnumbered .unlisted}
 
 All ::BTCR2 Updates:: MUST be announced via a ::BTCR2 Beacon:: listed in the 
 canonical DID document at the time of the update. This is why it is vital to ensure 
-that every BTCR2 DID document contains at least one BTCR2 Beacon. 
+that every did:btcr2 DID document contains at least one BTCR2 Beacon. 
 Use [Algo 15. Create Singleton Beacon Service] to create a BTCR2 Beacon that can be updated independently. 
 Or, use [Algo 16. Join Cohort and Establish Aggregate Beacon Service] to use aggregation; 
 this allows any number of DIDs from any number of DID controllers to announce multiple participants’ 
 updates in a single Bitcoin transaction.
 
-#### Create a BTCR2 Update {.unnumbered}
+#### Create a BTCR2 Update {.unnumbered .unlisted}
 
 Starting with a DID document and its associated BTCR2 Beacon services, the DID Controller creates an 
 update using [Algo 17. Create Canonical BTCR2 Update]. This creates a signed [zCap invocation](https://w3c-ccg.github.io/zcap-spec/) 
 that is ready to be announced.
 
-#### Announce BTCR2 Update {.unnumbered}
+#### Announce BTCR2 Update {.unnumbered .unlisted}
 
 To announce an update using a ::Singleton Beacon::, use [Algo 18. Create & Announce Singleton Beacon Signal]. 
 
