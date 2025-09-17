@@ -1020,8 +1020,8 @@ This response SHOULD be sent over a secure communication channel and MAY be sign
 #### Algo 21. Aggregate & Request Signal Confirmation (Aggregator) {.unnumbered}
 
 Once the ::Beacon Aggregator:: has received responses to an update opportunity 
-from all ::Beacon Participants:: in the Cohort they can proceed to aggregate 
-the updates into a unsigned ::Beacon Signal::. They then send this signal, 
+from all ::Beacon Participants:: in the ::Beacon Cohort:: they can proceed to aggregate 
+the update announcements into a unsigned ::Beacon Signal::. They then send this signal, 
 along with the information required to confirm its construction, to each 
 of the participants. Additionally, aggregators aggregate the MuSig2 nonces 
 from each Beacon Participant following the nonce aggregation algorithm in [BIP327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki).
@@ -1032,21 +1032,23 @@ Aggregation of updates into a Beacon Signal depends on the type of ::BTCR2 Beaco
 indexes provided by participants to ::BTCR2 Update Announcements::. The ::Signal Bytes:: 
 included in a Map Beacon Signal is the SHA256 hash of the Beacon Announcement Map.  
 * For SMT Beacons, the aggregator constructs a ::Sparse Merkle Tree::. The index provided 
-by a ::Beacon Participant:: is the index of a leaf node and with the leaf being the value 
-provided by the participant for that index. Once constructed, the ::SMT:: is optimized and 
-individual SMT Proofs are generated for each index and shared with the ::Beacon Participant:: responsible for it.
+by a ::Beacon Participant:: is the index of a leaf node, with the value of this leaf being the 
+value provided by the participant for that index. All indexes registered with the aggregator MUST have
+values at their leaves within the SMT. Once constructed, the ::SMT:: is optimized and 
+individual SMT proofs are generated for each index and shared with the ::Beacon Participant:: 
+that registered the index.
 
-For a ::Map Beacon::, the request signal confirmation message contains.
+For a ::Map Beacon::, the request signal confirmation message contains:
 
 * The ::Beacon Announcement Map::.  
 * The ::Unsigned Beacon Signal::.  
-* The MuSig2 Aggregated Nonce.
+* The MuSig2 aggregated nonce.
 
-For an ::SMT Beacon::, the request signal confirmation message contains.
+For an ::SMT Beacon::, the request signal confirmation message contains:
 
 * An ::SMT Proof:: for each index belonging to the ::Beacon Participant::.  
 * The ::Unsigned Beacon Signal::.  
-* The MuSig2 Aggregated nonce.
+* The MuSig2 aggregated nonce.
 
 #### Algo 22. Confirm Signal (Participant) {.unnumbered}
 
