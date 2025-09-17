@@ -799,205 +799,345 @@ The steps are as follows:
 
 ### Update
 
-The Update algorithm calls a series of subroutines to construct, invoke and
-announce ::BTCR2 Updates:: for **did:btcr2** identifiers and their
-corresponding DID documents. An update to a **did:btcr2** document is an invoked
-capability using the [ZCAP-LD](https://w3c-ccg.github.io/zcap-spec/) data format,
-signed by a `verificationMethod` that has the authority to make the update as specified
-in the previous DID document. Capability invocations for updates MUST be authorized using Data Integrity
-following the [BIP340 Data Integrity Cryptosuite](https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#instantiate-cryptosuite)
-with a `proofPurpose` of `capabilityInvocation`.
+Updating a did:btcr2 identifier is a matter of constructing a signed ::BTCR2 Update:: then announcing 
+that update via one or more ::BTCR2 Beacons:: listed in the current DID document. 
+Updates are either announced independently using ::Singleton Beacons::, or 
+announced as part of an aggregation cohort to minimize on-chain costs, 
+using either ::Map Beacons:: or ::SMT Beacons::.
 
-It takes the following inputs:
+Fundamentally, two steps are involved. First, create an update to the DID Document, 
+secured by capability invocation verification method in the current DID Document. 
+Second, announce and anchor the update on-chain by broadcasting a ::Beacon Signal::
+to the Bitcoin network.
 
-* `identifier` - a valid **did:btcr2** identifier; REQUIRED; string.
-* `sourceDocument` - the DID document being updated; REQUIRED; object.
-* `sourceVersionId` - the version of the DID and DID document, an incrementing integer
-   starting from 1; REQUIRED; integer.
-* `documentPatch` - JSON Patch object containing a set of transformations to
-   be applied to the `sourceDocument`. The result of these transformations MUST
-   produce a DID document conformant to the DID Core specification; REQUIRED; object.
-* `verificationMethodId` - identifier for a `verificationMethod` within the
-   `sourceDocument`. The `verificationMethod` identified MUST be a
-   [BIP340 Multikey](https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#multikey);
-   REQUIRED; string.
-* `beaconIds` - an array containing the IDs that correspond to ::BTCR2 Beacons:: in the DID
-   document. These MUST identify service endpoints with one of the three ::Beacon Types::
-   `SingletonBeacon`, `MapBeacon`, and `SMTBeacon`; REQUIRED; array.
+#### Create a Beacon Service {.unnumbered .unlisted}
+
+All ::BTCR2 Updates:: MUST be announced via a ::BTCR2 Beacon:: listed in the 
+canonical DID document at the time of the update. This is why it is vital to ensure 
+that every did:btcr2 DID document contains at least one BTCR2 Beacon. 
+Use [Algo 15. Create Singleton Beacon Service] to create a BTCR2 Beacon that can be updated independently. 
+Or, use [Algo 16. Join Cohort and Establish Aggregate Beacon Service] to use aggregation; 
+this allows any number of DIDs from any number of DID controllers to aggregate their update announcements 
+in a single Bitcoin transaction.
+
+#### Create a BTCR2 Update {.unnumbered .unlisted}
+
+Starting with a DID document and its associated BTCR2 Beacon services, the DID Controller creates an 
+update using [Algo 17. Create Canonical BTCR2 Update]. This creates a signed [zCap invocation](https://w3c-ccg.github.io/zcap-spec/) 
+that is ready to be announced.
+
+#### Announce BTCR2 Update {.unnumbered .unlisted}
+
+To announce an update using a ::Singleton Beacon::, use [Algo 18. Create & Announce Singleton Beacon Signal]. 
+
+To aggregate a ::BTCR2 Update Announcement:: within a ::Beacon Signal:: from a 
+::Map Beacon:: or an ::SMT Beacon::, this specification defines a five-step process 
+that guarantees all participants have confirmed every Signal that gets announced 
+on the Bitcoin blockchain. 
+
+First, the ::Beacon Aggregator:: advertises the update opportunity using [Algo 19. Advertise Update Opportunity (Aggregator)]. 
+Then, each member of the ::Beacon Cohort:: prepares a response to that opportunity using 
+[Algo 20. Prepare & Submit Opportunity Response (Participant)]. Once all responses are received, the aggregator 
+combines those responses into a ::Beacon Signal:: and requests confirmation by all participants using 
+[Algo 21. Aggregate & Request Signal Confirmation (Aggregator)]. To confirm that signal, 
+each participant uses [Algo 22. Confirm Signal (Participant)] to sign and submit their 
+MuSig2 partially signed Bitcoin transaction. Finally, the aggregator combines all partial signatures from 
+the confirmations to finalize the transaction and posts the Beacon Signal to the Bitcoin blockchain using 
+[Algo 23. Broadcast Aggregated Signal (Aggregator)].
+
+#### Algo 15. Create Singleton Beacon Service {.unnumbered .tabbed}
+
+The algorithm constructs a service object that defines a ::Singleton Beacon:: 
+to be included within a DID document.
+
+A ::Singleton Beacon:: service is a JSON object and MUST contain the properties:
+
+* id - A string that uniquely identifies the service within the DID document 
+that the service is going to be included.  
+* type - The string value ‘SingletonBeacon’  
+* serviceEndpoint - A [BIP21 URI](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki) 
+encoded Bitcoin address. This address SHOULD be under the sole control of the DID controller.
+
+
+##### Hide {.unnumbered .unlisted}
+
+##### Examples {.unnumbered .unlisted}
+
+
+[[Example]{.example-number-after} - A Singleton Beacon Service]{.example-caption}
+ 
+```{.json include="json/Beacons/SingletonBeacon-service.json"}
+```
+
+#### Algo 16. Join Cohort and Establish Aggregate Beacon Service {.unnumbered .tabbed}
+
+This protocol coordinates the construction of an n-of-n Pay-to-Taproot address, 
+where each ::Beacon Participant:: in a ::Beacon Cohort:: contributes one of the n keys 
+used to construct the ::Beacon Address::. This ensures that all on-chain ::Beacon Signals:: 
+are cryptographically signed by every DID controller participating in the cohort, 
+while ::Beacon Aggregators:: remain minimally trusted. A given cohort may fail 
+because other participants stop participating or the aggregator is compromised; 
+however, the consequences are limited to the failure of the ::BTCR2 Beacon:: to broadcast
+::Beacon Signals:: that announce ::BTCR2 Updates::. This protocol ensures that 
+NEITHER the ::Beacon Aggregator:: NOR other ::Beacon Participants:: are able compromise or 
+invalidate a did:btcr2 identifier. 
+
+The protocol starts with a ::Beacon Aggregator:: defining their intention to 
+aggregate according to a particular protocol, using a particular ::Beacon Type::, 
+on a particular schedule, using a particular messaging channel. This intention 
+is used to gather a cohort of DID controllers with which the aggregator has a 
+secure communications channel for coordinating the aggregated announcement of ::BTCR2 Updates::. 
+The means of establishing the ::Beacon Cohort:: are outside the scope of this specification. 
+
+DID controllers that wish to join an advertised ::Beacon Cohort:: MUST provide 
+the aggregator with a Schnorr public key. Participants MUST also provide the 
+set of indexes that are used to identify specific ::BTCR2 Updates:: announced by a 
+::Beacon Signal::.. These indexes MUST be SHA256 hashes of the 
+DIDs that will use the ::BTCR2 Beacon:: to aggregate updates.
+
+The ::Beacon Aggregator:: decides when to finalize the ::Beacon Cohort::. 
+Once they do so, they MUST compute an n-of-n Pay-to-Taproot address from 
+the keys the ::Beacon Participants:: provided. This is the ::Beacon Address::
+and MUST be sent to all participants, along with the set of keys used 
+to construct this address. ::Beacon Participants:: SHOULD verify the address 
+for themselves, and confirm that the key they provided is in the set of keys used to construct the address.
+
+Once DID controllers are satisfied that they are a ::Beacon Participant:: of a 
+finalized ::Beacon Cohort::, they MAY construct the service object defining this 
+BTCR2 Beacon that can be included within the DID documents service array for the relevant DIDs. 
+
+The service object MUST contain the following properties:
+
+* id \- A URL expressed according to the [DID Syntax](https://www.w3.org/TR/did/upcoming/#did-syntax) that uniquely identifies the service within the DID document that the service is going to be included.  
+* type \- The type of the BTCR2 Beacon service. For ::Aggregate Beacons:: this must be either “MapBeacon” or “SMTBeacon”. 
+This MUST match the type of the BTCR2 Beacon as specified by the Beacon Aggregator.
+* serviceEndpoint \- The ::Beacon Address:: received from the aggregator, encoded as a [BIP21 URI](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki).
+
+##### Hide {.unnumbered .unlisted}
+
+##### Examples {.unnumbered .unlisted}
+
+
+[[Example]{.example-number-after} - A Map Beacon Service]{.example-caption}
+ 
+```{.json include="json/Beacons/MapBeacon-service.json"}
+```
+
+[[Example]{.example-number-after} - A SMT Beacon Service]{.example-caption}
+ 
+```{.json include="json/Beacons/SMTBeacon-service.json"}
+```
+
+#### Algo 17. Create Canonical BTCR2 Update {.unnumbered .tabbed}
+
+
+This algorithm constructs and invokes a ::BTCR2 Update:: to a specific DID document.
+
+A ::BTCR2 Update:: is a JSON object that MUST contain the following properties:
+
+* @context - A context array containing the follow context URLs  
+  * `"https://w3id.org/zcap/v1"`  
+  * `"https://w3id.org/security/data-integrity/v2"`  
+  * `"https://w3id.org/json-ld-patch/v1"`  
+  * `"https://btcr2.dev/context/v1"`  
+* patch - A JSON Patch ([RFC6902](https://datatracker.ietf.org/doc/html/rfc6902)) object 
+that defines a set of transformations to be applied to a DID document. The result of 
+applying the patch MUST be a conformant DID document according to the [DID core v1.1](https://www.w3.org/TR/did-1.1/) specification.  
+* targetVersionId - The versionId of the DID document after the patch has been applied. 
+When constructing an BTCR2 Update to a DID document with a specific versionId, 
+the targetVersionId MUST be one more than this versionId.  
+* sourceHash - A base64 encoded SHA256 hash of the canonicalized DID document 
+that the patch MUST be applied to. The DID document MUST be canonicalized using 
+the [JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785) (JCS).  
+* targetHash - A base64 encoded SHA256 hash of the canonicalized DID document that 
+results from applying the patch to the source document. The DID document MUST be 
+canonicalized using JCS.  
+* proof - A [Data Integrity](https://w3c.github.io/vc-data-integrity/) proof with the proof 
+purpose set to "capabilityInvocation". This MUST be a valid invocation of the capability to 
+update the DID document of the did:btcr2 identifier being resolved. The root capability 
+to update a specific did:btcr2 identifier’s DID document can be derived from the identifier following 
+[Algo 12. Derive Root Capability]. The data model for the 
+capability invocation is specified in the [Authorization Capabilities specification](https://w3c-ccg.github.io/zcap-spec). 
+The following properties MUST be set to specific values:  
+  * capability - the identifier of the root capability to update a specific did:btcr2 DID document  
+  * invocationTarget - the did:btcr2 identifier whose DID document is being updated.
+
+All ::BTCR2 Updates:: SHOULD ensure a healthy set of ::BTCR2 Beacons:: to maintain resilient updatability of their DID document.
+
+##### Hide {.unnumbered .unlisted}
+
+##### Imperative Algorithm {.unnumbered .unlisted}
+
+This algorithm defines how to secure a ::Unsecured BTCR2 Update::. It takes the following inputs:
+
+* `identifier` \- a valid did:btcr2 identifier; REQUIRED; string.  
+* `unsecuredBTCR2Update` \- an unsecured [BTCR2 Update](https://dcdpr.github.io/did-btc1/#def-btc1-update); REQUIRED; object.  
+* `verificationMethod` \- an object containing reference to keys and/or Beacons to use for [ZCAP-LD](https://w3c-ccg.github.io/zcap-spec/); REQUIRED; string.
 
 It returns the following output:
 
-* `signalsMetadata` - A Map from Bitcoin transaction identifiers of ::Beacon Signals:: 
-   to a struct containing ::Sidecar Data:: for that signal provided as part of the
-   `resolutionOptions`; object containing the following properties:
-   * `btcr2Update` - A ::BTCR2 Update:: which SHOULD match the update announced
-      by the ::Beacon Signal::. In the case of a ::SMT:: proof of non-inclusion, the
-      `btcr2Update` will be null; object.
-   * `proofs` - A ::Sparse Merkle Tree:: proof that the provided `btcr2Update` value is
-      the value at the leaf indexed by the **did:btcr2** being resolved; array.
+* `btcr2Update` \- a [BTCR2 Update](https://dcdpr.github.io/did-btc1/#def-btc1-update) object invoking the capability to update a specific did:btcr2 DID document.
 
 The steps are as follows:
 
-1. Set `unsecuredUpdate` to the result of passing `btcr2Identifier`, `sourceDocument`,
-   `sourceVersionId`, and `documentPatch` into the [Construct BTCR2 Update]
-   algorithm.
-1. Set `verificationMethod` to the result of retrieving the verificationMethod from
-   `sourceDocument` using the `verificationMethodId`.
-1. Validate the `verificationMethod` is a BIP340 Multikey:
-    1. `verificationMethod.type` == `Multikey`
-    1. `verificationMethod.publicKeyMultibase[4]` == `zQ3s`
-1. Set `unsecuredBtcr2Update` to the result of passing `btcr2Identifier`,
-   `unsecuredUpdate`, `and `verificationMethod` to the
-   [Invoke BTCR2 Update] algorithm.
-1. Set `signalsMetadata` to the result of passing `btcr2Identifier`, `sourceDocument`, 
-   `beaconIds` and `unsecuredBtcr2Update` to the [Announce DID Update] algorithm.
-1. Return `signalsMetadata`. It is up to implementations to ensure that the
-   `signalsMetadata` is persisted.
+1. Set `privateKeyBytes` to the result of retrieving the private key bytes associated with the `verificationMethod` value. 
+How this is achieved is left to the implementation.  
+2. Set `rootCapability` to the result of passing `identifier` into [Algo 12. Derive Root Capability].  
+3. Initialize `proofOptions` to an empty object.  
+4. Set `proofOptions.type` to `DataIntegrityProof`.  
+5. Set `proofOptions.cryptosuite` to `bip340-jcs-2025`.  
+6. Set `proofOptions.verificationMethod` to `verificationMethod.id`.  
+7. Set `proofOptions.proofPurpose` to `capabilityInvocation`.  
+8. Set `proofOptions.capability` to `rootCapability.id`.  
+9. Set `proofOptions.capabilityAction` to `Write`.  
+10. Set `cryptosuite` to the result of executing the Cryptosuite Instantiation algorithm from 
+the [BIP340 Data Integrity specification](https://dcdpr.github.io/data-integrity-schnorr-secp256k1) passing in `proofOptions`.  
+11. Set `btcr2Update` to the result of executing the [Add Proof](https://www.w3.org/TR/vc-data-integrity/#add-proof) 
+algorithm from VC Data Integrity passing `unsecuredBTCR2Update` as the input document, `cryptosuite`, and the set of `proofOptions`.  
+12. Return `btcr2Update`.
 
-#### Construct BTCR2 Update
+##### Examples {.unnumbered .unlisted}
 
-The Construct BTCR2 Update algorithm applies a `documentPatch` to a
-`sourceDocument` and verifies the resulting `targetDocument` is a conformant
-DID document.
+[[Example]{.example-number-after} - A BTCR2 Update that adds a new verification method and 
+authorizing it for the authentication verification relationship to an Initial DID Document]{.example-caption}
+ 
+```{.json include="json/CRUD-Operations/btcr2-update.json"}
+```
 
-It takes the following inputs:
 
-* `identifier` - a valid **did:btcr2** identifier; REQUIRED; string.
-* `sourceDocument` - the DID document being transformed by the `documentPatch`; REQUIRED; object.
-* `sourceVersionId` - the version of the DID and DID document, an incrementing integer
-   starting from 1; REQUIRED; integer.
-* `documentPatch` - JSON Patch object containing a set of transformations to
-   be applied to the `sourceDocument`. The result of these transformations MUST
-   produce a DID document conformant to the DID Core specification; REQUIRED; object.
+#### Algo 18. Create & Announce Singleton Beacon Signal {.unnumbered .tabbed}
 
-It returns the following output:
+This algorithm creates a ::Singleton Beacon:: Signal that announces a single ::BTCR2 Update:: 
+and broadcasts this ::Beacon Signal:: on the Bitcoin network.
 
-* `unsecuredBtcr2Update` - a newly created ::BTCR2 Update::; object.
+The Singleton Beacon Signal is a Bitcoin transaction that MUST spend at least one ::UTXO:: 
+controlled by the ::Beacon Address::. This Beacon Address MUST be included as a service 
+within the DID document of the did:btcr2 that is announcing the BTCR2 Update. 
+The last transaction output of the transaction MUST 
+commit to the 32 bytes of data using the following form: `OP_RETURN, OP_PUSH_BYTES, <32 signal bytes>`. 
+These ::Signal Bytes:: MUST be the 32-byte SHA256 hash of the ::BTCR2 Update:: canonicalized using JCS.
 
-The steps are as follows:
+The ::Beacon Signal:: MUST be signed by the private key that controls the ::Beacon Address::. 
+The signed Bitcoin transaction can be broadcast to the Bitcoin network and included 
+within the Bitcoin blockchain.
 
-1. Check that `sourceDocument.id` equals `btcr2Identifier` else MUST raise
-   `invalidDidUpdate` error.
-1. Initialize `unsecuredBtcr2Update` to an empty object.
-1. Set `unsecuredBtcr2Update.@context` to the following list.
-   `["https://w3id.org/zcap/v1", "https://w3id.org/security/data-integrity/v2", 
-   "https://w3id.org/json-ld-patch/v1", "https://btcr2.dev/context/v1"]`
-1. Set `unsecuredBtcr2Update.patch` to `documentPatch`.
-1. Set `targetDocument` to the result of applying the `documentPatch` to the
-   `sourceDocument`, following the JSON Patch specification.
-1. Validate `targetDocument` is a conformant DID document, else MUST raise
-   `invalidDidUpdate` error.
-1. Set `sourceHashBytes` to the result of passing `sourceDocument` into
-   the [JSON Canonicalization and Hash] algorithm.
-1. Set `unsecuredBtcr2Update.sourceHash` to the base64 of `sourceHashBytes`.
-1. Set `targetHashBytes` to the result of passing `targetDocument` into
-   the [JSON Canonicalization and Hash] algorithm.
-1. Set `unsecuredBtcr2Update.targetHash` to the base64 of `targetHashBytes`.
-1. Set `unsecuredBtcr2Update.targetVersionId` to `sourceVersionId + 1`
-1. Return `unsecuredBtcr2Update`.
+##### Hide {.unnumbered .unlisted}
 
-#### Invoke BTCR2 Update
+##### Examples {.unnumbered .unlisted}
 
-The Invoke BTCR2 Update algorithm retrieves the `privateKeyBytes` for the
-`verificationMethod` and adds a capability invocation in the form of a Data
-Integrity proof following the [ZCAP-LD](https://w3c-ccg.github.io/zcap-spec/)
-and Verifiable Credentials (VC) Data Integrity specifications.
+[[Example]{.example-number-after} - A hex encoded signed Beacon Signal from a Singleton Beacon]{.example-caption}
+ 
+`0100000000010175b62c3943aa4c696e4d95a6dd552b39cf7e98129501b2f285782f00ca59da400000000000ffffffff02a08c0000000000001600145ee17e005920fd86de8b54ffab2630f452d24c320000000000000000226a205eb68e519c150ec8df198ed9718d342fe23c17789e86eaa78ad1ede073f082d102483045022100909b73a6545c69333143c176b22486bc165fa2e36092b307787db103cce5a4e90220707f5f127ebe98304db415ae9ccbdaa997f13c226421c927471df979fa8f1e6b01210324ee967d8495aec7e15ad5509db305f8c84792452d8ba5cb5eb0f3ea12aeb9fb00000000`
 
-It takes the following inputs:
+#### Algo 19. Advertise Update Opportunity (Aggregator) {.unnumbered}
 
-* `identifier` - a valid **did:btcr2** identifier; REQUIRED; string.
-* `unsecuredBtcr2Update` - an unsecured ::BTCR2 Update::; REQUIRED; object.
-* `verificationMethod` - an object containing reference to keys and/or Beacons to
-   use for [ZCAP-LD](https://w3c-ccg.github.io/zcap-spec/); REQUIRED; string.
+The ::Beacon Aggregator:: MUST advertise to all its ::Beacon Participants:: that there 
+is an opportunity for them to aggregate their update. This MAY occur at a regular time 
+interval as specified by the aggregator or it MAY be through a message sent to all 
+participants. The means of advertising to the participants are outside the scope of 
+this specification. The only requirement is that all ::Beacon Participants:: are made 
+aware of the opportunity and the ::BTCR2 Beacon:: with which it is associated.
 
-It returns the following output:
+#### Algo 20. Prepare & Submit Opportunity Response (Participant) {.unnumbered}
 
-* `btcr2Update` - a ::BTCR2 Update:: object invoking the capability
-   to update a specific **did:btcr2** DID document.
+::Beacon Participants:: must submit a response to all update opportunities presented 
+to them by the ::BTCR2 Beacons:: they participate in, otherwise these beacons will be 
+unable to broadcast ::Beacon Signals::. This response must include:
 
-The steps are as follows:
+* The indexes representing the SHA256 hash of the DIDs to be updated. 
+These indexes SHOULD have been previously registered by the 
+Beacon Participant as part of joining the ::Beacon Cohort::.  
+* For each index included within the Beacon Signal, the value of the update MUST be provided. 
+The calculation of the value varies by ::Beacon Type::.
+  *  For a ::Map Beacon:: the value is the SHA256 hash of the ::BTCR2 Update:: canonicalized using JCS.
+  * For a ::SMT Beacon:: the value is either the double SHA256 hash of a random nonce if no 
+  update is present for the index or the SHA256 hash of the concatenated SHA256 hash of a 
+  random nonce and the canonicalized BTCR2 Update. Participants MUST persist their nonce values.
+  * Participants of ::SMT Beacons:: MUST provide an update for all indexes they registered 
+  with the ::Beacon Aggregator::.
+* MuSig2 Nonce: A MuSig2 nonce constructed according to the nonce generation algorithm specified in [BIP327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki).
 
-1. Set `privateKeyBytes` to the result of retrieving the private key bytes
-   associated with the `verificationMethod` value. How this is achieved is left to
-   the implementation.
-1. Set `rootCapability` to the result of passing `btcr2Identifier` into the
-   [Derive Root Capability from **did:btcr2** Identifier] algorithm.
-1. Initialize `proofOptions` to an empty object.
-1. Set `proofOptions.type` to `DataIntegrityProof`.
-1. Set `proofOptions.cryptosuite` to `bip340-jcs-2025`.
-1. Set `proofOptions.verificationMethod` to `verificationMethod.id`.
-1. Set `proofOptions.proofPurpose` to `capabilityInvocation`.
-1. Set `proofOptions.capability` to `rootCapability.id`.
-1. Set `proofOptions.capabilityAction` to `Write`.
-1. Set `cryptosuite` to the result of executing the Cryptosuite Instantiation
-   algorithm from the [BIP340 Data Integrity specification](https://dcdpr.github.io/data-integrity-schnorr-secp256k1) passing in
-   `proofOptions`.
-1. Set `btcr2Update` to the result of executing the
-   [Add Proof](https://www.w3.org/TR/vc-data-integrity/#add-proof)
-   algorithm from VC Data Integrity passing `unsecuredBtcr2Update` as the input document,
-   `cryptosuite`, and the set of `proofOptions`.
-1. Return `btcr2Update`.
+This response SHOULD be sent over a secure communication channel and MAY be signed.
 
-#### Announce DID Update
+#### Algo 21. Aggregate & Request Signal Confirmation (Aggregator) {.unnumbered}
 
-The Announce DID Update algorithm retrieves `beaconServices` from the `sourceDocument`
-and calls the [Broadcast DID Update] algorithm corresponding to the type of
-the ::BTCR2 Beacon::.
+Once the ::Beacon Aggregator:: has received responses to an update opportunity 
+from all ::Beacon Participants:: in the ::Beacon Cohort:: they can proceed to aggregate 
+the update announcements into a unsigned ::Beacon Signal::. They then send this signal, 
+along with the information required to confirm its construction, to each 
+of the participants. Additionally, aggregators aggregate the MuSig2 nonces 
+from each Beacon Participant following the nonce aggregation algorithm in [BIP327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki).
 
-It takes the following inputs:
+Aggregation of updates into a Beacon Signal depends on the type of ::BTCR2 Beacon::.
 
-* `identifier` - a valid **did:btcr2** identifier; REQUIRED; string.
-* `sourceDocument` - the DID document being updated; REQUIRED; object.
-* `beaconIds` - an array containing the IDs that correspond to ::BTCR2 Beacons:: in the DID
-   document. These MUST identify service endpoints with one of the three ::Beacon Types::
-   `SingletonBeacon`, `MapBeacon`, and `SMTBeacon`; REQUIRED; array.
-* `btcr2Update` - a ::BTCR2 Update:: object invoking the capability
-   to update a specific **did:btcr2** DID document; REQUIRED; object.
+* For Map Beacons, the aggregator creates a ::Beacon Announcement Map:: that maps 
+indexes provided by participants to ::BTCR2 Update Announcements::. The ::Signal Bytes:: 
+included in a Map Beacon Signal is the SHA256 hash of the Beacon Announcement Map.  
+* For SMT Beacons, the aggregator constructs a ::Sparse Merkle Tree::. The index provided 
+by a ::Beacon Participant:: is the index of a leaf node, with the value of this leaf being the 
+value provided by the participant for that index. All indexes registered with the aggregator MUST have
+values at their leaves within the SMT. Once constructed, the ::SMT:: is optimized and 
+individual SMT proofs are generated for each index and shared with the ::Beacon Participant:: 
+that registered the index.
 
-It returns the following output:
+For a ::Map Beacon::, the request signal confirmation message contains:
 
-* `signalsMetadata` - a mapping from Bitcoin transaction identifiers of ::Beacon Signals:: 
-   to a struct containing ::Sidecar Data:: for that signal, provided as part of the
-   `resolutionOptions`; a map with the following properties:
-   * `btcr2Update` - a ::BTCR2 Update:: which SHOULD match the update announced
-      by the ::Beacon Signal::. In the case of a ::SMT:: proof of non-inclusion, the
-      `btcr2Update` will be null; object.
-   * `proofs` - A ::Sparse Merkle Tree:: proof that the provided `btcr2Update` value is
-      the value at the leaf indexed by the **did:btcr2** being resolved; object.
+* The ::Beacon Announcement Map::.  
+* The ::Unsigned Beacon Signal::.  
+* The MuSig2 aggregated nonce.
 
-The steps are as follows:
+For an ::SMT Beacon::, the request signal confirmation message contains:
 
-1. Set `beaconServices` to an empty array.
-1. Set `signalMetadata` to an empty array.
-1. For `beaconId` in `beaconIds`:
-   1. Find `beaconService` in `sourceDocument.service` with an `id` property
-    equal to `beaconId`.
-   1. If no `beaconService` MUST throw `beaconNotFound` error.
-   1. Push `beaconService` to `beaconServices`.
-1. For `beaconService` in `beaconServices`:
-   1. Set `signalMetadata` to null.
-   1. If `beaconService.type` == `SingletonBeacon`:
-      1. Set `signalMetadata` to the result of
-        passing `beaconService` and `btcr2Update` to the
-        [Broadcast Singleton Beacon Signal] algorithm.
-   1. Else If `beaconService.type` == `CIDAggregateBeacon`:
-      1. Set `signalMetadata` to the result of
-        passing `btcr2Identifier`, `beaconService` and `btcr2Update` to the
-        [Broadcast CIDAggregate Beacon Signal] algorithm.
-   1. Else If `beaconService.type` == `SMTAggregateBeacon`:
-      1. Set `signalMetadata` to the result of
-        passing `btcr2Identifier`, `beaconService` and `btcr2Update` to the
-        [Broadcast SMTAggregate Beacon Signal] algorithm.
-   1. Else:
-      1. MUST throw `invalidBeacon` error.
-  1. Merge `signalMetadata` into `signalsMetadata`.
-1. Return `signalsMetadata`
+* An ::SMT Proof:: for each index belonging to the ::Beacon Participant::.  
+* The ::Unsigned Beacon Signal::.  
+* The MuSig2 aggregated nonce.
+
+#### Algo 22. Confirm Signal (Participant) {.unnumbered}
+
+First the participant validates the contents of the ::Beacon Signal:: according 
+to the type of the ::BTCR2 Beacon:::
+
+* For a ::Map Beacon::, the ::Beacon Participant:: validates that all the indexes 
+registered with the aggregator have expected values within the ::Beacon Announcement Map::. 
+That is, the indexes are only within the map if a BTCR2 Update was submitted and 
+the mapped value for those indexes are the same ::BTCR2 Update Announcements:: they submitted. 
+Participants MUST also check that the ::Signal Bytes:: of the ::Beacon Signal:: 
+contains the SHA256 hash of the Beacon Announcement Map.   
+* For an ::SMT Beacon::, the ::Beacon Participant:: validates that all the indexes registered 
+with the aggregator have SMT proofs and that the SMT Proofs are valid proofs of the 
+values they submitted to the aggregator. The ::Signal Bytes:: in the ::Beacon Signal:: 
+MUST be used as the ::SMT:: root to verify these proofs. 
+
+Once the participant is satisfied that the ::Beacon Signal:: only announces the ::BTCR2 Updates:: they submitted for 
+DIDs that they control they partially sign the Bitcoin transaction according 
+to the signing algorithm specified in [BIP327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki). 
+Participants use the private key corresponding to the public key they provided when joining the ::Beacon Cohort:: 
+and the MuSig2 aggregated nonce provided by the aggregator to execute this signing algorithm.
+
+Finally, participants return the partially signed Bitcoin transaction to the aggregator, confirming the Beacon Signal.
+
+Note: Beacon Participants SHOULD to maintain the set of data required to validate their 
+::BTCR2 Updates:: against the ::Beacon Signal::. In the case of a Map Beacon Signal, 
+this means persisting the Beacon Announcement Map and the BTCR2 Updates 
+announced within that map for indexes that they control. For SMT Beacon Signals, 
+participants must persist the ::BTCR2 Updates::, nonce values and SMT Proofs for each index they control.
+
+#### Algo 23. Broadcast Aggregated Signal (Aggregator) {.unnumbered}
+
+Once the ::Beacon Aggregator:: has received confirmation of the ::Beacon Signal:: 
+from all ::Beacon Participants:: within the ::Beacon Cohort:: they finalize the signature 
+on the ::Beacon Signal::. Signal confirmations contain partial signatures from each participant, 
+these are aggregated together to create a final signature that spends the ::UTXO:: controlled 
+by the ::Beacon Address:: included an an input into the ::Beacon Signal::. Aggregation of partial 
+signatures is done following the partial signature aggregation algorithm specified in 
+[BIP327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki). The result is a 
+signed Bitcoin transaction. The aggregator then broadcasts this transaction onto the Bitcoin network.
 
 ### Deactivate
 
 To deactivate a **did:btcr2**, the DID controller MUST add the property `deactivated`
 with the value `true` on the DID document. To do this, the DID controller constructs
-a valid ::BTCR2 Update:: with a JSON patch that adds this property and announces
+a valid ::BTCR2 Update:: with a JSON Patch that adds this property and announces
 the ::BTCR2 Update:: by broadcasting an ::Authorized Beacon Signal:: following
-the algorithm in [Update]. Once a **did:btcr2** has been deactivated this
+the algorithms defined in [Update]. Once a **did:btcr2** has been deactivated this
 state is considered permanent and resolution MUST terminate.
