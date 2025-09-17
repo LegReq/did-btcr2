@@ -817,8 +817,8 @@ canonical DID document at the time of the update. This is why it is vital to ens
 that every did:btcr2 DID document contains at least one BTCR2 Beacon. 
 Use [Algo 15. Create Singleton Beacon Service] to create a BTCR2 Beacon that can be updated independently. 
 Or, use [Algo 16. Join Cohort and Establish Aggregate Beacon Service] to use aggregation; 
-this allows any number of DIDs from any number of DID controllers to announce multiple participants’ 
-updates in a single Bitcoin transaction.
+this allows any number of DIDs from any number of DID controllers to aggregate their update announcements 
+in a single Bitcoin transaction.
 
 #### Create a BTCR2 Update {.unnumbered .unlisted}
 
