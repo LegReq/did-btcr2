@@ -1075,18 +1075,18 @@ and the MuSig2 aggregated nonce provided by the aggregator to execute this signi
 Finally, participants return the partially signed Bitcoin transaction to the aggregator, confirming the Beacon Signal.
 
 Note: Beacon Participants SHOULD to maintain the set of data required to validate their 
-BTCR2 Updates against the Beacon Signal. In the case of a Map Beacon Signal, 
+::BTCR2 Updates:: against the ::Beacon Signal::. In the case of a Map Beacon Signal, 
 this means persisting the Beacon Announcement Map and the BTCR2 Updates 
 announced within that map for indexes that they control. For SMT Beacon Signals, 
-participants must persist the BTCR2 Updates, nonce values and SMT Proofs for each index they control.
+participants must persist the ::BTCR2 Updates::, nonce values and SMT Proofs for each index they control.
 
 #### Algo 23. Broadcast Aggregated Signal (Aggregator) {.unnumbered}
 
 Once the ::Beacon Aggregator:: has received confirmation of the ::Beacon Signal:: 
 from all ::Beacon Participants:: within the ::Beacon Cohort:: they finalize the signature 
-on the Beacon Signal. Signal confirmations contain partial signatures from each participant, 
+on the ::Beacon Signal::. Signal confirmations contain partial signatures from each participant, 
 these are aggregated together to create a final signature that spends the ::UTXO:: controlled 
-by the ::Beacon Address:: included an an input into the Beacon Signal. Aggregation of partial 
+by the ::Beacon Address:: included an an input into the ::Beacon Signal::. Aggregation of partial 
 signatures is done following the partial signature aggregation algorithm specified in 
 [BIP327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki). The result is a 
 signed Bitcoin transaction. The aggregator then broadcasts this transaction onto the Bitcoin network.
