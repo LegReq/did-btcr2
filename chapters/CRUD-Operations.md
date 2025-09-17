@@ -908,7 +908,7 @@ This MUST match the type of the BTCR2 Beacon as specified by the Beacon Aggregat
 
 This algorithm constructs and invokes a ::BTCR2 Update:: to a specific DID document.
 
-A ::BTCR2 Update:: MUST contain the following:
+A ::BTCR2 Update:: is a JSON object that MUST contain the following properties:
 
 * @context - A context array containing the follow context URLs  
   * `"https://w3id.org/zcap/v1"`  
@@ -920,24 +920,24 @@ that defines a set of transformations to be applied to a DID document. The resul
 applying the patch MUST be a conformant DID document according to the [DID core v1.1](https://www.w3.org/TR/did-1.1/) specification.  
 * targetVersionId - The versionId of the DID document after the patch has been applied. 
 When constructing an BTCR2 Update to a DID document with a specific versionId, 
-the targetVersionId must be one more than this versionId.  
+the targetVersionId MUST be one more than this versionId.  
 * sourceHash - A base64 encoded SHA256 hash of the canonicalized DID document 
-that the patch must be applied to. The DID document must be canonicalized using 
+that the patch MUST be applied to. The DID document MUST be canonicalized using 
 the [JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785) (JCS).  
 * targetHash - A base64 encoded SHA256 hash of the canonicalized DID document that 
-results from applying the patch to the source document. The DID document must be 
+results from applying the patch to the source document. The DID document MUST be 
 canonicalized using JCS.  
 * proof - A [Data Integrity](https://w3c.github.io/vc-data-integrity/) proof with the proof 
 purpose set to "capabilityInvocation". This MUST be a valid invocation of the capability to 
 update the DID document of the did:btcr2 identifier being resolved. The root capability 
 to update a specific did:btcr2 identifier’s DID document can be derived from the identifier following 
-[Algo 12. Derive Root Capability]. This capability may be delegated. The data model for the 
+[Algo 12. Derive Root Capability]. The data model for the 
 capability invocation is specified in the [Authorization Capabilities specification](https://w3c-ccg.github.io/zcap-spec). 
 The following properties MUST be set to specific values:  
-  * capability - the identifier of the root capability to update a specific did:btcr2 DID Document  
+  * capability - the identifier of the root capability to update a specific did:btcr2 DID document  
   * invocationTarget - the did:btcr2 identifier whose DID document is being updated.
 
-All ::BTCR2 Updates:: SHOULD ensure a healthy set of Beacons to maintain resilient updatability of their DID document.
+All ::BTCR2 Updates:: SHOULD ensure a healthy set of ::BTCR2 Beacons:: to maintain resilient updatability of their DID document.
 
 ##### Hide {.unnumbered .unlisted}
 
