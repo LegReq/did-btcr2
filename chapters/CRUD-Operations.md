@@ -990,8 +990,8 @@ within the Bitcoin blockchain.
 #### Algo 19. Advertise Update Opportunity (Aggregator) {.unnumbered}
 
 The ::Beacon Aggregator:: MUST advertise to all its ::Beacon Participants:: that there 
-is an opportunity for them to aggregate their update. This may occur at a regular time 
-interval as specified by the aggregator or it may be through a message sent to all 
+is an opportunity for them to aggregate their update. This MAY occur at a regular time 
+interval as specified by the aggregator or it MAY be through a message sent to all 
 participants. The means of advertising to the participants are outside the scope of 
 this specification. The only requirement is that all ::Beacon Participants:: are made 
 aware of the opportunity and the ::BTCR2 Beacon:: with which it is associated.
