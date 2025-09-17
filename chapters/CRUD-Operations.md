@@ -1063,18 +1063,18 @@ Participants MUST also check that the ::Signal Bytes:: of the ::Beacon Signal::
 contains the SHA256 hash of the Beacon Announcement Map.   
 * For an ::SMT Beacon::, the ::Beacon Participant:: validates that all the indexes registered 
 with the aggregator have SMT proofs and that the SMT Proofs are valid proofs of the 
-values they submitted tp the aggregator. The ::Signal Bytes:: bytes in the ::Beacon Signal:: 
-MUST be used as the root hash to verify these proofs. 
+values they submitted to the aggregator. The ::Signal Bytes:: in the ::Beacon Signal:: 
+MUST be used as the ::SMT:: root to verify these proofs. 
 
-Once the participant is satisfied that the Beacon Signal only announces BTCR2 Updates for 
-DIDs they control that they submitted, they partially sign the Bitcoin transaction according 
+Once the participant is satisfied that the ::Beacon Signal:: only announces the ::BTCR2 Updates:: they submitted for 
+DIDs that they control they partially sign the Bitcoin transaction according 
 to the signing algorithm specified in [BIP327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki). 
-Participants use the private key corresponding to the public key it provided when it joined the ::Beacon Cohort:: 
+Participants use the private key corresponding to the public key they provided when joining the ::Beacon Cohort:: 
 and the MuSig2 aggregated nonce provided by the aggregator to execute this signing algorithm.
 
-Finally, participants return the partially signed Bitcoin transaction to the aggregator confirming the Beacon Signal.
+Finally, participants return the partially signed Bitcoin transaction to the aggregator, confirming the Beacon Signal.
 
-Note: Participants SHOULD to maintain the set of data required to validate their 
+Note: Beacon Participants SHOULD to maintain the set of data required to validate their 
 BTCR2 Updates against the Beacon Signal. In the case of a Map Beacon Signal, 
 this means persisting the Beacon Announcement Map and the BTCR2 Updates 
 announced within that map for indexes that they control. For SMT Beacon Signals, 
