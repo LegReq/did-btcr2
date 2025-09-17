@@ -855,8 +855,8 @@ A ::Singleton Beacon:: service is a JSON object and MUST contain the properties:
 * id - A string that uniquely identifies the service within the DID document 
 that the service is going to be included.  
 * type - The string value ‘SingletonBeacon’  
-* serviceEndpoint - A BIP21 URI encoded Bitcoin address. This address SHOULD be 
-under the sole control of the DID controller.
+* serviceEndpoint - A [BIP21 URI](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki) 
+encoded Bitcoin address. This address SHOULD be under the sole control of the DID controller.
 
 #### Algo 16. Join Cohort and Establish Aggregate Beacon Service {.unnumbered}
 
