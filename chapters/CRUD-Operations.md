@@ -861,29 +861,30 @@ encoded Bitcoin address. This address SHOULD be under the sole control of the DI
 #### Algo 16. Join Cohort and Establish Aggregate Beacon Service {.unnumbered}
 
 This protocol coordinates the construction of an n-of-n Pay-to-Taproot address, 
-where each partic::Beacon Participant:: in a ::Beacon Cohort:: contributes one of the n keys 
+where each ::Beacon Participant:: in a ::Beacon Cohort:: contributes one of the n keys 
 used to construct the ::Beacon Address::. This ensures that all on-chain ::Beacon Signals:: 
 are cryptographically signed by every DID controller participating in the cohort, 
 while ::Beacon Aggregators:: remain minimally trusted. A given cohort may fail 
 because other participants stop participating or the aggregator is compromised; 
 however, the consequences are limited to the failure of the ::BTCR2 Beacon:: to broadcast
 ::Beacon Signals:: that announce ::BTCR2 Updates::. This protocol ensures that 
-NEITHER the aggregator NOR other participants are able compromise or invalidate a did:btcr2 identifier. 
+NEITHER the ::Beacon Aggregator:: NOR other ::Beacon Participants:: are able compromise or 
+invalidate a did:btcr2 identifier. 
 
 The protocol starts with a ::Beacon Aggregator:: defining their intention to 
 aggregate according to a particular protocol, using a particular ::Beacon Type::, 
 on a particular schedule, using a particular messaging channel. This intention 
-is used to gather a cohort of DID controllers with which the Aggregator has a 
-secure communications channel for announcing and receiving ::BTCR2 Updates::. 
-The means of establishing the cohort are outside the scope of this specification. 
+is used to gather a cohort of DID controllers with which the aggregator has a 
+secure communications channel for coordinating the aggregated announcement of ::BTCR2 Updates::. 
+The means of establishing the ::Beacon Cohort:: are outside the scope of this specification. 
 
 DID controllers that wish to join an advertised ::Beacon Cohort:: MUST provide 
 the aggregator with a Schnorr public key. Participants MUST also provide the 
 set of indexes that are used to identify specific ::BTCR2 Updates:: announced by a 
 ::Beacon Signal::.. These indexes MUST be SHA256 hashes of the 
-DIDs that will use the BTCR2 Beacon to aggregate updates.
+DIDs that will use the ::BTCR2 Beacon:: to aggregate updates.
 
-The Beacon Aggregator decides when to finalize the ::Beacon Cohort::. 
+The ::Beacon Aggregator:: decides when to finalize the ::Beacon Cohort::. 
 Once they do so, they MUST compute an n-of-n Pay-to-Taproot address from 
 the keys the ::Beacon Participants:: provided. This is the ::Beacon Address::
 and MUST be sent to all participants, along with the set of keys used 
@@ -894,10 +895,11 @@ Once DID controllers are satisfied that they are a ::Beacon Participant:: of a
 finalized ::Beacon Cohort::, they MAY construct the service object defining this 
 BTCR2 Beacon that can be included within the DID documents service array for the relevant DIDs. 
 
-The service object MUST contain:
+The service object MUST contain the following properties:
 
 * id \- A URL expressed according to the [DID Syntax](https://www.w3.org/TR/did/upcoming/#did-syntax) that uniquely identifies the service within the DID document that the service is going to be included.  
-* type \- The type of the BTCR2 Beacon service. For ::Aggregate Beacons:: this must be either “MapBeacon” or “SMTBeacon”  
+* type \- The type of the BTCR2 Beacon service. For ::Aggregate Beacons:: this must be either “MapBeacon” or “SMTBeacon”. 
+This MUST match the type of the BTCR2 Beacon as specified by the Beacon Aggregator.
 * serviceEndpoint \- The ::Beacon Address:: received from the aggregator, encoded as a [BIP21 URI](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki).
 
 
