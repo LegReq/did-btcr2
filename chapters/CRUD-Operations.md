@@ -957,7 +957,7 @@ The steps are as follows:
 
 1. Set `privateKeyBytes` to the result of retrieving the private key bytes associated with the `verificationMethod` value. 
 How this is achieved is left to the implementation.  
-2. Set `rootCapability` to the result of passing `BTCR2Identifier` into [Algo 12. Derive Root Capability].  
+2. Set `rootCapability` to the result of passing `identifier` into [Algo 12. Derive Root Capability].  
 3. Initialize `proofOptions` to an empty object.  
 4. Set `proofOptions.type` to `DataIntegrityProof`.  
 5. Set `proofOptions.cryptosuite` to `bip340-jcs-2025`.  
